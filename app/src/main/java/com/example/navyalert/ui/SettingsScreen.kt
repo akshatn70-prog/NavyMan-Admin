@@ -2,12 +2,16 @@ package com.example.navyalert.ui
 
 import android.Manifest
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -18,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.example.navyalert.util.NotificationHelper
+import com.example.navyalert.util.NotificationSettingsManager
+import com.example.navyalert.util.NotificationSoundManager
 import com.example.navyalert.util.QuietHoursManager
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -32,6 +38,11 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
     var startTime by remember { mutableStateOf(QuietHoursManager.getStartTime(context)) }
     var endTime by remember { mutableStateOf(QuietHoursManager.getEndTime(context)) }
 
+    var isSoundEnabled by remember { mutableStateOf(NotificationSettingsManager.isSoundEnabled(context)) }
+    var isVibrationEnabled by remember { mutableStateOf(NotificationSettingsManager.isVibrationEnabled(context)) }
+    
+    var selectedSoundUri by remember { mutableStateOf(NotificationSoundManager.getSoundUri(context)) }
+
     val permissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -39,6 +50,25 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
             NotificationHelper.showTestNotification(context)
         } else {
             Toast.makeText(context, "Notification permission is required to receive alerts.", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    val soundLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        uri?.let {
+            try {
+                // Persist access to this URI so the service can play it later
+                context.contentResolver.takePersistableUriPermission(
+                    it,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                NotificationSoundManager.saveSoundUri(context, it)
+                selectedSoundUri = it
+                Toast.makeText(context, "Alert sound updated", Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to save sound: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
@@ -83,7 +113,8 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(16.dp)
+                .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text("App Configuration", style = MaterialTheme.typography.titleLarge)
@@ -95,10 +126,56 @@ fun SettingsScreen(onNavigateBack: () -> Unit) {
             )
             
             ListItem(
-                headlineContent = { Text("Notifications") },
-                supportingContent = { Text("Enable push alerts") },
-                trailingContent = { Switch(checked = true, onCheckedChange = {}) }
+                headlineContent = { Text("Notification Sound") },
+                supportingContent = { Text("Play sound for alerts") },
+                trailingContent = { 
+                    Switch(
+                        checked = isSoundEnabled, 
+                        onCheckedChange = { 
+                            isSoundEnabled = it
+                            NotificationSettingsManager.setSoundEnabled(context, it)
+                        }
+                    ) 
+                }
             )
+
+            ListItem(
+                headlineContent = { Text("Vibration") },
+                supportingContent = { Text("Vibrate for alerts") },
+                trailingContent = { 
+                    Switch(
+                        checked = isVibrationEnabled, 
+                        onCheckedChange = { 
+                            isVibrationEnabled = it
+                            NotificationSettingsManager.setVibrationEnabled(context, it)
+                        }
+                    ) 
+                }
+            )
+
+            HorizontalDivider()
+
+            Text("Escrow Alert Sound", style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = if (selectedSoundUri != null) "Custom sound selected" else "Default sound (navy_alert)",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { soundLauncher.launch(arrayOf("audio/*")) }) {
+                    Text("Choose Sound")
+                }
+                if (selectedSoundUri != null) {
+                    TextButton(onClick = { 
+                        NotificationSoundManager.clearSound(context)
+                        selectedSoundUri = null
+                        Toast.makeText(context, "Reverted to default sound", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Text("Reset Default")
+                    }
+                }
+            }
+
+            HorizontalDivider()
 
             Button(
                 onClick = {

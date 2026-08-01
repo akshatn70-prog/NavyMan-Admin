@@ -13,12 +13,15 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
 
         val data = remoteMessage.data
-        val title = remoteMessage.notification?.title ?: data["title"]
-        val body = remoteMessage.notification?.body ?: data["body"]
+        val title = data["title"]
+        val body = data["body"]
         val chatId = data["chat_id"]
         val messageId = data["message_id"]
 
-        Log.d("FCM", "Notification Received - Title: $title, Body: $body, ChatId: $chatId, MsgId: $messageId")
+        Log.d(
+            "FCM",
+            "Notification Received - Title: $title, Body: $body, ChatId: $chatId, MsgId: $messageId"
+        )
 
         if (title != null && body != null) {
             handleMessage(title, body, chatId, messageId)
@@ -30,9 +33,9 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         // Accept both "Escrow Filled" and "New Filled Escrow Form"
         val shouldNotify = title.contains("Escrow Filled", ignoreCase = true) ||
                 title.contains("New Filled Escrow Form", ignoreCase = true) ||
-                body.contains("@admin", ignoreCase = true) ||
-                body.contains("@admins", ignoreCase = true) ||
-                body.contains("@Navyman1", ignoreCase = true)
+                body.contains("Admin Mention", ignoreCase = true) ||
+                body.contains("Admins Mention", ignoreCase = true) ||
+                body.contains("Navyman 1 Mention", ignoreCase = true)
 
         if (shouldNotify) {
             if (QuietHoursManager.isCurrentlyInQuietHours(this)) {
@@ -48,7 +51,7 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
         super.onNewToken(token)
         Log.d("FCM", "Token: $token")
-        
+
         // Register token with server
         FCMTokenManager.registerTokenWithServer(this, token)
     }

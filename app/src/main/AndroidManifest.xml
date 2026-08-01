@@ -6,14 +6,16 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
 
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@mipmap/ic_navy_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_navy_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.NavyAlert">
         <activity
@@ -29,6 +31,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".TelegramLauncherActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.NoDisplay" />
+
         <service
             android:name=".service.MyFirebaseMessagingService"
             android:exported="false">
@@ -36,6 +43,11 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
+
+        <service
+            android:name=".service.AlertSoundService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
     </application>
 
 </manifest>
