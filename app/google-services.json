@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "320776741034",
+    "project_id": "navyman-admin",
+    "storage_bucket": "navyman-admin.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:320776741034:android:d04708111980e8c33330d3",
+        "android_client_info": {
+          "package_name": "com.example.navyalert"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAdKhbgj0wP62pykHevPS7OwiIMybcXWgk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
